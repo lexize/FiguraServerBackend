@@ -1,0 +1,12 @@
+{
+  "fsb.config.priority.1": "Figura only",
+  "fsb.config.priority.1.tooltip": "Uses only Figura's backend for this setting",
+  "fsb.config.priority.2": "Figura then FSB",
+  "fsb.config.priority.2.tooltip": "Uses Figura's backend if connected to, otherwise trying to use FSB",
+  "fsb.config.priority.3": "Figura and FSB",
+  "fsb.config.priority.3.tooltip": "Uses both Figura's backend and FSB",
+  "fsb.config.priority.4": "FSB then Figura",
+  "fbs.config.priority.4.tooltip": "Uses FSB if server has it, otherwise trying to use Figura's backend",
+  "fsb.config.priority.5": "FSB only",
+  "fsb.config.priority.5.tooltip": "Uses only FSB for this setting"
+}

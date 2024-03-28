@@ -1,21 +1,10 @@
 package org.lexize.fsb;
 
-import java.nio.file.Path;
+import net.minecraft.server.level.ServerPlayer;
+import org.lexize.fsb.packets.IFSBPacket;
 
-public class FSBPlatform implements IFSBPlatform {
-
-    @Override
-    public void initClientPackets(FSBClient client) {
-        throw new AssertionError();
-    }
-
-    @Override
-    public void initServerPackets(FSBServer server) {
-        throw new AssertionError();
-    }
-
-    @Override
-    public Path getConfigDir() {
+public class FSBPlatform {
+    public static void sendServerPacket(ServerPlayer receiver, IFSBPacket packet) {
         throw new AssertionError();
     }
 }

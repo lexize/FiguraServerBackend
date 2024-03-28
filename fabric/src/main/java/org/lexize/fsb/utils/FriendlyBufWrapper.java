@@ -4,7 +4,7 @@ import net.minecraft.network.FriendlyByteBuf;
 
 import java.util.UUID;
 
-public class FriendlyBufWrapper implements IFriendlyByteBuf{
+public class FriendlyBufWrapper implements IFriendlyByteBuf {
     private final FriendlyByteBuf source;
     public FriendlyBufWrapper(FriendlyByteBuf source) {
         this.source = source;
