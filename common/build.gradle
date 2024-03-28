@@ -1,0 +1,22 @@
+repositories {
+    maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+    mappings loom.layered {
+        mappings("org.quiltmc:quilt-mappings:$minecraft_version+build.$mappings:intermediary-v2")
+        officialMojangMappings()
+    }
+
+    // Libraries
+    compileOnly("com.github.FiguraMC.luaj:luaj-core:$luaj-figura")
+    compileOnly("com.github.FiguraMC.luaj:luaj-jse:$luaj-figura")
+    compileOnly("com.neovisionaries:nv-websocket-client:$nv_websocket")
+
+    // Figura common lib
+    modCompileOnly("org.figuramc:figura-common-intermediary:$figura_version")
+
+    // We depend on fabric loader here to use the fabric @Environment annotations and get the mixin dependencies
+    // Do NOT use other classes from fabric loader
+    modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
+}

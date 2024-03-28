@@ -1,0 +1,51 @@
+plugins {
+    //id "io.github.juuxel.loom-vineflower" version "1.11.0" apply false
+    id "dev.architectury.loom" version "1.5-SNAPSHOT" apply false
+}
+
+subprojects {
+//    apply plugin: "io.github.juuxel.loom-vineflower"
+    apply plugin: "dev.architectury.loom"
+
+    loom {
+        silentMojangMappingsLicense()
+    }
+
+    repositories {
+        maven { url 'https://maven.quiltmc.org/repository/release/' }
+        maven {
+            name = "Figura Maven Release"
+            url = uri("https://maven.figuramc.org/releases")
+        }
+        maven {
+            name = "Figura Maven Snapshots"
+            url = uri("https://maven.figuramc.org/snapshots")
+        }
+        maven { url 'https://jitpack.io' }
+    }
+
+    dependencies {
+        minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
+    }
+
+}
+
+allprojects {
+    apply plugin: "java"
+    apply plugin: "maven-publish"
+
+    java_version = rootProject.java_version
+    archivesBaseName = rootProject.archives_base_name
+    version = rootProject.mod_version + "+" + rootProject.minecraft_version
+    group = rootProject.maven_group
+    figura_version = rootProject.figura_version
+
+    tasks.withType(JavaCompile) {
+        options.encoding = "UTF-8"
+        options.release = 17
+    }
+
+    java {
+        withSourcesJar()
+    }
+}
