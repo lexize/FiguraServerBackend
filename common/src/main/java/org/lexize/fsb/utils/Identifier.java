@@ -5,5 +5,5 @@ package org.lexize.fsb.utils;
  * @param namespace Namespace of identifier
  * @param path Path of identifier
  */
-public record Identifier(String namespace, String path) implements IIdentifier {
+public record Identifier(String namespace, String path) {
 }

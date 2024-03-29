@@ -1,0 +1,8 @@
+{
+  "compatibilityLevel": "JAVA_17",
+  "minVersion": "0.8",
+  "package": "org.lexize.fsb.mixin",
+  "client": [
+    "FiguraPingSendMixin"
+  ]
+}

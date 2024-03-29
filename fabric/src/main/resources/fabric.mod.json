@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "schemaVersion": 1,
   "entrypoints": {
-    "client": ["org.lexize.fsb.FSBFabricClient"],
-    "main": ["org.lexize.fsb.FSBFabric"]
+    "client": ["org.lexize.fsb.FSBClientFabric"]
   }
 }
