@@ -27,7 +27,7 @@ In config you can configure things related to your backend. Here is the default 
 Client side of FSB can be configured through Figura settings menu for global settings, and in server info edit menu for per-server settings.
 
 ## FAQ
-**Q:** My server if lagging when sending avatars to players, what to do?\
+**Q:** My server is lagging when sending avatars to players, what to do?\
 **A:** Make `avatar_part_size` in server config lower, it will slow down avatar download speed, but cuz of that it will have to read less bytes per tick.
 
 **Q:** Plugins API?\
