@@ -18,6 +18,8 @@ public class FSBConfig {
     private boolean avatarUploadAndDownload;
     @SerializedName("max_avatar_size")
     private int maxAvatarSize;
+    @SerializedName("avatar_size_limit_message")
+    private String avatarSizeLimitMessage;
     @SerializedName("avatar_gc_ticks")
     private int avatarGCTicks = 5000;
 
@@ -26,9 +28,12 @@ public class FSBConfig {
     private boolean pings;
     @SerializedName("pings_rate_limit")
     private int pingsRateLimit;
+    @SerializedName("ping_rate_limit_message")
+    private String pingRateLimitMessage;
     @SerializedName("pings_size_limit")
     private int pingsSizeLimit;
-
+    @SerializedName("ping_size_limit_message")
+    private String pingSizeLimitMessage;
     public String getDatabaseConnectionString() {
         return databaseConnectionString;
     }
@@ -71,5 +76,13 @@ public class FSBConfig {
 
     public int getPingsSizeLimit() {
         return pingsSizeLimit;
+    }
+
+    public String getPingRateLimitMessage() {
+        return pingRateLimitMessage;
+    }
+
+    public String getPingSizeLimitMessage() {
+        return pingSizeLimitMessage;
     }
 }

@@ -12,21 +12,23 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public abstract class FSBServer {
     private static final Logger LOGGER = Logger.getLogger("FSB");
-    protected final HashMap<Identifier, FSBServerPacketHandler<?>> SERVER_PACKET_HANDLERS = new HashMap<>();
     private static FSBServer INSTANCE;
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-
+    protected final HashMap<Identifier, FSBServerPacketHandler<?>> SERVER_PACKET_HANDLERS = new HashMap<>();
+    private final HashMap<UUID, PingCounter> PING_COUNTERS = new HashMap<>();
     private FSBConfig config;
     private FSBAvatarManager avatarManager;
     private FSBDatabase database;
     private boolean allowAvatars;
     private boolean allowPings;
+    private int pingResetCounter = 0;
 
     public FSBServer() {
         INSTANCE = this;
@@ -79,6 +81,22 @@ public abstract class FSBServer {
         initializeServerPackets();
     }
 
+    public void tick() {
+        avatarManager.tick();
+        pingResetCounter++;
+        if (pingResetCounter == 20) {
+            for (PingCounter counter: PING_COUNTERS.values()) counter.reset();
+        }
+    }
+
+    public boolean allowPings() {
+        return allowPings;
+    }
+
+    public boolean allowAvatars() {
+        return allowPings;
+    }
+
     protected abstract void initializeServerPackets();
     public void sendS2CPacket(UUID receiver, IFSBPacket packet) {
         if (receiver.version() != 4) return; // :trol:
@@ -86,12 +104,42 @@ public abstract class FSBServer {
     }
     protected abstract void sendS2CPacketPlatform(UUID receiver, IFSBPacket packet);
     public abstract Path getConfigDir();
+    public abstract List<UUID> getPlayers();
 
     public void onPlayerJoin(UUID uuid) {
         sendS2CPacket(uuid, new FSBHandshakeS2C(config.avatarFeaturesAllowed(), config.pingsAllowed()));
     }
 
+    public PingCounter getCounter(UUID player) {
+        return PING_COUNTERS.computeIfAbsent(player, (u) -> new PingCounter());
+    }
+
     public static FSBServer getInstance() {
         return INSTANCE;
+    }
+
+    public static class PingCounter {
+        private PingCounter() {}
+        private int size = 0;
+        private int count = 0;
+        public void incCount() {
+            count++;
+        }
+        public void addSize(int size) {
+            this.size += size;
+        }
+
+        public int getCount() {
+            return count;
+        }
+
+        public int getSize() {
+            return size;
+        }
+
+        private void reset() {
+            size = 0;
+            count = 0;
+        }
     }
 }
