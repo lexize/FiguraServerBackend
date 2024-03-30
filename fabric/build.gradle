@@ -32,6 +32,9 @@ dependencies {
 
     common(project(path: ":client")) { transitive false }
     shadowCommon(project(path: ":client")) { transitive false }
+
+    common(project(path: ":server")) { transitive false }
+    shadowCommon(project(path: ":server")) { transitive false }
 }
 
 processResources {

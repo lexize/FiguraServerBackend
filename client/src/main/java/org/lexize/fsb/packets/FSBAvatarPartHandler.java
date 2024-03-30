@@ -6,11 +6,15 @@ import org.lexize.fsb.utils.IFriendlyByteBuf;
 
 import java.io.IOException;
 
-public class FSBAvatarPartHandler implements IFSBClientPacketHandler<FSBAvatarPartS2C> {
+public class FSBAvatarPartHandler extends FSBClientPacketHandler<FSBAvatarPartS2C> {
+    public FSBAvatarPartHandler(FSBClient parent) {
+        super(parent);
+    }
+
     @Override
     public void handle(FSBAvatarPartS2C packet) {
         try {
-            FSBClient.instance().acceptAvatarPart(packet.getOwner(), packet.getData(), packet.isFinal(), packet.getHash());
+            parent.acceptAvatarPart(packet.getOwner(), packet.getData(), packet.isFinal(), packet.getHash(), packet.getId());
         } catch (IOException ignored) {}
     }
 

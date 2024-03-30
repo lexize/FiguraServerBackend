@@ -10,14 +10,18 @@ import org.lexize.fsb.utils.IFriendlyByteBuf;
 
 import java.util.BitSet;
 
-public class FSBUserDataHandler implements IFSBClientPacketHandler<FSBUserDataS2C> {
+public class FSBUserDataHandler extends FSBClientPacketHandler<FSBUserDataS2C> {
+    public FSBUserDataHandler(FSBClient parent) {
+        super(parent);
+    }
+
     @Override
     public void handle(FSBUserDataS2C packet) {
         UserData userData = FSBClient.getUserData().computeIfAbsent(packet.getOwner(), UserData::new);
         Pair<BitSet, BitSet> badges = new Pair<>(packet.getPrideBadges(), new BitSet());
         userData.loadBadges(badges);
         if (!CacheAvatarLoader.checkAndLoad(packet.getAvatarHash(), userData)) {
-            FSBClient.instance().sendC2SPacket(new FSBFetchAvatarC2S(packet.getOwner()));
+            parent.sendC2SPacket(new FSBFetchAvatarC2S(packet.getOwner()));
         }
     }
 

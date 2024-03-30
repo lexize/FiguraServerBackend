@@ -37,6 +37,16 @@ public class FiguraNetworkStuffMixin {
             default -> true;
         };
 
+        boolean cancel_original_ping = !NetworkStuff.isConnected() && switch (priority) {
+            case FSB_ONLY -> true;
+            case FSB_THEN_FIGURA -> !FSBClient.instance().allowPings();
+            default -> false;
+        };
+
+        if (cancel_original_ping) {
+            ci.cancel();
+        }
+
         if (send) {
             sync = sync && switch (FSBClient.getSyncPriority()) {
                 case FIGURA_ONLY -> false;
@@ -46,7 +56,6 @@ public class FiguraNetworkStuffMixin {
 
             FSBPingC2S packet = new FSBPingC2S(id, sync, data);
             FSBClient.instance().sendC2SPacket(packet);
-            ci.cancel();
         }
     }
 
@@ -65,7 +74,10 @@ public class FiguraNetworkStuffMixin {
         if (send) {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             NbtIo.writeCompressed(avatar.nbt, baos);
-            FSBAvatarPartC2S packet = new FSBAvatarPartC2S(true, baos.toByteArray());
+            FSBAvatarPartC2S packet = new FSBAvatarPartC2S(
+                    true,
+                    baos.toByteArray(),
+                    avatar.id == null ? "avatar" : avatar.id);
             FSBClient.instance().sendC2SPacket(packet);
             baos.close();
             ci.cancel();

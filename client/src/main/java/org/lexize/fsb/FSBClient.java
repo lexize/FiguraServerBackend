@@ -65,14 +65,7 @@ public abstract class FSBClient {
         );
     }};
 
-    public final HashMap<Identifier, IFSBClientPacketHandler<?>> CLIENT_HANDLERS = new HashMap<>() {{
-        put(FSBHandshakeS2C.ID, new FSBClientHandshakeHandler());
-        put(FSBPingS2C.ID, new FSBClientPingHandler());
-        put(FSBUserDataS2C.ID, new FSBUserDataHandler());
-        put(FSBAvatarPartS2C.ID, new FSBAvatarPartHandler());
-        put(FSBCancelAvatarLoadS2C.ID, new FSBCancelAvatarLoadHandler());
-        put(FSBClearAvatarS2C.ID, new FSBClearAvatarHandler());
-    }};
+    public final HashMap<Identifier, FSBClientPacketHandler<?>> CLIENT_HANDLERS = new HashMap<>();
 
     private static FSBClient INSTANCE;
     private boolean connected = false;
@@ -80,6 +73,12 @@ public abstract class FSBClient {
     private boolean allowPings = false;
     private final HashMap<UUID, ByteArrayOutputStream> avatarDataBuffers = new HashMap<>();
     public FSBClient() {
+        CLIENT_HANDLERS.put(FSBHandshakeS2C.ID, new FSBClientHandshakeHandler(this));
+        CLIENT_HANDLERS.put(FSBPingS2C.ID, new FSBClientPingHandler(this));
+        CLIENT_HANDLERS.put(FSBUserDataS2C.ID, new FSBUserDataHandler(this));
+        CLIENT_HANDLERS.put(FSBAvatarPartS2C.ID, new FSBAvatarPartHandler(this));
+        CLIENT_HANDLERS.put(FSBCancelAvatarLoadS2C.ID, new FSBCancelAvatarLoadHandler(this));
+        CLIENT_HANDLERS.put(FSBClearAvatarS2C.ID, new FSBClearAvatarHandler(this));
         INSTANCE = this;
     }
 
@@ -110,7 +109,7 @@ public abstract class FSBClient {
         this.allowAvatars = false;
     }
 
-    public void acceptAvatarPart(UUID avatarOwner, byte[] avatarData, boolean isFinal, String hash) throws IOException {
+    public void acceptAvatarPart(UUID avatarOwner, byte[] avatarData, boolean isFinal, String hash, String id) throws IOException {
         ByteArrayInputStream bais;
         boolean firstRead = !avatarDataBuffers.containsKey(avatarOwner);
         if (firstRead && isFinal) {
@@ -127,8 +126,8 @@ public abstract class FSBClient {
             return;
         }
         CompoundTag avatarCompound = NbtIo.readCompressed(bais, NbtAccounter.unlimitedHeap());
-        AvatarManager.setAvatar(avatarOwner, avatarCompound);
         CacheAvatarLoader.save(hash, avatarCompound);
+        getUserData().computeIfAbsent(avatarOwner, UserData::new).loadAvatar(avatarCompound);
     }
 
     public void cancelAvatarLoad(UUID avatarOwner) {

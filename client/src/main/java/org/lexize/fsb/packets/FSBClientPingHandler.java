@@ -10,7 +10,11 @@ import org.lexize.fsb.utils.IFriendlyByteBuf;
 import static org.lexize.fsb.FSBClient.FSBPriority;
 import static org.lexize.fsb.FSBClient.FSBPriority.*;
 
-public class FSBClientPingHandler implements IFSBClientPacketHandler<FSBPingS2C> {
+public class FSBClientPingHandler extends FSBClientPacketHandler<FSBPingS2C> {
+    public FSBClientPingHandler(FSBClient parent) {
+        super(parent);
+    }
+
     @Override
     public void handle(FSBPingS2C packet) {
         FSBPriority priority = FSBClient.getPingsPriority();

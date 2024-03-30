@@ -1,0 +1,13 @@
+{
+  "database_connection_string": "jdbc:sqlite:fsb_database.db",
+  "database_login": null,
+  "database_password": null,
+  "database_table_prefix": "FSB_",
+
+  "avatar_upload_and_download": true,
+  "max_avatar_size": 100000,
+
+  "pings": true,
+  "pings_rate_limit": 20,
+  "pings_size_limit": 10000
+}

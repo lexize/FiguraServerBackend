@@ -14,17 +14,21 @@ public class FSBAvatarPartS2C implements IFSBPacket {
     private boolean isFinal;
     private byte[] data;
     private String hash;
+    private String id;
 
-    public FSBAvatarPartS2C(UUID owner, boolean isFinal, byte[] data, String hash) {
+    public FSBAvatarPartS2C(UUID owner, boolean isFinal, byte[] data, String hash, String id) {
         this.owner = owner;
         this.isFinal = isFinal;
+        this.id = id;
         this.data = data;
+        this.hash = hash;
     }
 
     public FSBAvatarPartS2C(IFriendlyByteBuf buf) {
         this.owner = buf.readUUID();
+        this.id = new String(buf.readByteArray(), StandardCharsets.UTF_8);
         this.isFinal = buf.readByte() == 1;
-        if (buf.readByte() == 1) {
+        if (this.isFinal) {
             this.hash = new String(buf.readByteArray(), StandardCharsets.UTF_8);
         }
         this.data = buf.readByteArray();
@@ -39,8 +43,7 @@ public class FSBAvatarPartS2C implements IFSBPacket {
     public void write(IFriendlyByteBuf buf) {
         buf.writeUUID(owner);
         buf.writeByte(isFinal ? 1 : 0);
-        if (hash != null) {
-            buf.writeByte(1);
+        if (isFinal) {
             buf.writeByteArray(hash.getBytes(StandardCharsets.UTF_8));
         }
         else {
@@ -63,5 +66,9 @@ public class FSBAvatarPartS2C implements IFSBPacket {
 
     public String getHash() {
         return hash;
+    }
+
+    public String getId() {
+        return id;
     }
 }

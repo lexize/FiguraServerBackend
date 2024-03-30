@@ -4,10 +4,15 @@ import org.lexize.fsb.FSBClient;
 import org.lexize.fsb.packets.client.FSBCancelAvatarLoadS2C;
 import org.lexize.fsb.utils.IFriendlyByteBuf;
 
-public class FSBCancelAvatarLoadHandler implements IFSBClientPacketHandler<FSBCancelAvatarLoadS2C> {
+public class FSBCancelAvatarLoadHandler extends FSBClientPacketHandler<FSBCancelAvatarLoadS2C> {
+
+    public FSBCancelAvatarLoadHandler(FSBClient parent) {
+        super(parent);
+    }
+
     @Override
     public void handle(FSBCancelAvatarLoadS2C packet) {
-        FSBClient.instance().cancelAvatarLoad(packet.getOwner());
+        parent.cancelAvatarLoad(packet.getOwner());
     }
 
     @Override
