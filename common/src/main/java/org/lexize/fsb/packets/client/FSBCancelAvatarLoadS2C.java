@@ -29,4 +29,8 @@ public class FSBCancelAvatarLoadS2C implements IFSBPacket {
     public void write(IFriendlyByteBuf buf) {
         buf.writeUUID(owner);
     }
+
+    public UUID getOwner() {
+        return owner;
+    }
 }

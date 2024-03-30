@@ -3,23 +3,23 @@ package org.lexize.fsb;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import org.figuramc.figura.avatar.AvatarManager;
+import org.figuramc.figura.avatar.UserData;
+import org.figuramc.figura.avatar.local.CacheAvatarLoader;
 import org.figuramc.figura.config.ConfigType;
-import org.lexize.fsb.packets.FSBClientHandshakeHandler;
-import org.lexize.fsb.packets.FSBClientPingHandler;
-import org.lexize.fsb.packets.IFSBClientPacketHandler;
-import org.lexize.fsb.packets.IFSBPacket;
-import org.lexize.fsb.packets.client.FSBHandshakeS2C;
-import org.lexize.fsb.packets.client.FSBPingS2C;
+import org.lexize.fsb.packets.*;
+import org.lexize.fsb.packets.client.*;
+import org.lexize.fsb.packets.client.FSBUserDataS2C;
 import org.lexize.fsb.utils.Identifier;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public abstract class FSBClient {
@@ -29,26 +29,24 @@ public abstract class FSBClient {
     }};
     private static final String FSB_CONFIG_TRANSLATION_KEY = "fsb.config.";
     private static final List<Component> FSB_PRIORITY_TRANSLATIONS = List.of(
-            Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "priority.1"),
-            Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "priority.2"),
-            Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "priority.3"),
-            Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "priority.4"),
-            Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "priority.5")
+            Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "priority.figura"),
+            Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "priority.figura_fsb"),
+            Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "priority.fsb_figura"),
+            Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "priority.fsb")
     );
     private static final List<Component> FSB_PRIORITY_TOOLTIPS_TRANSLATIONS = List.of(
-            Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "priority.1.tooltip"),
-            Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "priority.2.tooltip"),
-            Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "priority.3.tooltip"),
-            Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "priority.4.tooltip"),
-            Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "priority.5.tooltip")
+            Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "priority.figura.tooltip"),
+            Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "priority.figura_fsb.tooltip"),
+            Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "priority.fsb_figura.tooltip"),
+            Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "priority.fsb.tooltip")
     );
-    private static final ConfigType.EnumConfig AVATARS_PRIORITY = new ConfigType.EnumConfig("fsb.config.avatars", FSB_CATEGORY, 1, 5) {{
+    private static final ConfigType.EnumConfig AVATARS_PRIORITY = new ConfigType.EnumConfig("fsb.config.avatars", FSB_CATEGORY, 1, 4) {{
         name = Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "avatars");
         tooltip = Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "avatars.tooltip");
         enumList = FSB_PRIORITY_TRANSLATIONS;
         enumTooltip = FSB_PRIORITY_TOOLTIPS_TRANSLATIONS;
     }};
-    private static final ConfigType.EnumConfig PINGS_PRIORITY = new ConfigType.EnumConfig("fsb.config.pings", FSB_CATEGORY, 1, 5) {{
+    private static final ConfigType.EnumConfig PINGS_PRIORITY = new ConfigType.EnumConfig("fsb.config.pings", FSB_CATEGORY, 1, 4) {{
         name = Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "pings");
         tooltip = Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "pings.tooltip");
         enumList = FSB_PRIORITY_TRANSLATIONS;
@@ -58,43 +56,61 @@ public abstract class FSBClient {
         name = Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "sync");
         tooltip = Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "sync.tooltip");
         enumList = List.of(
-                Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "sync.1"),
-                Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "sync.2")
+                Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "sync.figura"),
+                Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "sync.fsb")
         );
         enumTooltip = List.of(
-                Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "sync.1.tooltip"),
-                Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "sync.2.tooltip")
+                Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "sync.figura.tooltip"),
+                Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "sync.fsb.tooltip")
         );
     }};
 
     public final HashMap<Identifier, IFSBClientPacketHandler<?>> CLIENT_HANDLERS = new HashMap<>() {{
-        put(FSBPingS2C.ID, new FSBClientPingHandler());
         put(FSBHandshakeS2C.ID, new FSBClientHandshakeHandler());
+        put(FSBPingS2C.ID, new FSBClientPingHandler());
+        put(FSBUserDataS2C.ID, new FSBUserDataHandler());
+        put(FSBAvatarPartS2C.ID, new FSBAvatarPartHandler());
+        put(FSBCancelAvatarLoadS2C.ID, new FSBCancelAvatarLoadHandler());
+        put(FSBClearAvatarS2C.ID, new FSBClearAvatarHandler());
     }};
 
     private static FSBClient INSTANCE;
     private boolean connected = false;
-    private HashMap<UUID, ByteArrayOutputStream> avatarDataBuffers = new HashMap<>();
+    private boolean allowAvatars = false;
+    private boolean allowPings = false;
+    private final HashMap<UUID, ByteArrayOutputStream> avatarDataBuffers = new HashMap<>();
     public FSBClient() {
         INSTANCE = this;
     }
 
     public abstract void sendC2SPacket(IFSBPacket packet);
-    public abstract void initializeClientPackets();
+    protected abstract void initializeClientPackets();
 
     public boolean isConnected() {
         return connected;
     }
 
-    public void onConnect() {
+    public boolean allowPings() {
+        return allowPings;
+    }
+
+    public boolean allowAvatars() {
+        return allowAvatars;
+    }
+
+    public void onConnect(boolean allowAvatars, boolean allowPings) {
         connected = true;
+        this.allowAvatars = allowAvatars;
+        this.allowPings = allowPings;
     }
 
     public void onDisconnect() {
         connected = false;
+        this.allowPings = false;
+        this.allowAvatars = false;
     }
 
-    public void acceptAvatarPart(UUID avatarOwner, byte[] avatarData, boolean isFinal) throws IOException {
+    public void acceptAvatarPart(UUID avatarOwner, byte[] avatarData, boolean isFinal, String hash) throws IOException {
         ByteArrayInputStream bais;
         boolean firstRead = !avatarDataBuffers.containsKey(avatarOwner);
         if (firstRead && isFinal) {
@@ -112,6 +128,7 @@ public abstract class FSBClient {
         }
         CompoundTag avatarCompound = NbtIo.readCompressed(bais, NbtAccounter.unlimitedHeap());
         AvatarManager.setAvatar(avatarOwner, avatarCompound);
+        CacheAvatarLoader.save(hash, avatarCompound);
     }
 
     public void cancelAvatarLoad(UUID avatarOwner) {
@@ -129,23 +146,28 @@ public abstract class FSBClient {
     }
 
     public static FSBPriority getSyncPriority() {
-        FSBPriority priority = getPingsPriority();
-        if (priority != FSBPriority.FIGURA_AND_FSB) return priority;
-        return SYNC_PRIORITY.value == 0 ? FSBPriority.FIGURA_THEN_FSB : FSBPriority.FSB_THEN_FIGURA;
+        return getPingsPriority();
+    }
+    public static Map<UUID, UserData> getUserData() {
+        try {
+            Class<AvatarManager> managerClass = AvatarManager.class;
+            Field f = managerClass.getDeclaredField("LOADED_USERS");
+            return (Map<UUID, UserData>) f.get(null);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
     public enum FSBPriority {
         FIGURA_ONLY,
         FIGURA_THEN_FSB,
-        FIGURA_AND_FSB,
         FSB_THEN_FIGURA,
         FSB_ONLY;
         public static FSBPriority fromId(int i) {
             return switch (i) {
                 case 0 -> FIGURA_ONLY;
                 case 1 -> FIGURA_THEN_FSB;
-                case 2 -> FIGURA_AND_FSB;
-                case 3 -> FSB_THEN_FIGURA;
-                case 4 -> FSB_ONLY;
+                case 2 -> FSB_THEN_FIGURA;
+                case 3 -> FSB_ONLY;
                 default -> null;
             };
         }

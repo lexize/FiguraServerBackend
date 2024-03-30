@@ -13,7 +13,7 @@ public class FSBClientHandshakeHandler implements IFSBClientPacketHandler<FSBHan
 
     @Override
     public void handle(FSBHandshakeS2C packet) {
-        FSBClient.instance().onConnect();
+        FSBClient.instance().onConnect(packet.allowAvatars(), packet.allowPings());
         FSBClient.instance().sendC2SPacket(new FSBHandshakeC2S());
     }
 
