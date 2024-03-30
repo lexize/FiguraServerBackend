@@ -1,6 +1,5 @@
 package org.lexize.fsb.packets.client;
 
-import org.figuramc.figura.avatar.AvatarManager;
 import org.lexize.fsb.FSB;
 import org.lexize.fsb.packets.IFSBPacket;
 import org.lexize.fsb.utils.IFriendlyByteBuf;

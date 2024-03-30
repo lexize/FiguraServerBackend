@@ -107,6 +107,7 @@ public abstract class FSBClient {
         connected = false;
         this.allowPings = false;
         this.allowAvatars = false;
+        avatarDataBuffers.clear();
     }
 
     public void acceptAvatarPart(UUID avatarOwner, byte[] avatarData, boolean isFinal, String hash, String id) throws IOException {

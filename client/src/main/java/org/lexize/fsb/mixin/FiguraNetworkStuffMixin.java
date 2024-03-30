@@ -8,7 +8,7 @@ import org.figuramc.figura.backend2.NetworkStuff;
 import org.figuramc.figura.backend2.websocket.C2SMessageHandler;
 import org.lexize.fsb.FSBClient;
 import org.lexize.fsb.packets.server.FSBAvatarPartC2S;
-import org.lexize.fsb.packets.server.FSBClearAvatarC2S;
+import org.lexize.fsb.packets.server.FSBDeleteAvatarC2S;
 import org.lexize.fsb.packets.server.FSBFetchUserDataC2S;
 import org.lexize.fsb.packets.server.FSBPingC2S;
 import org.spongepowered.asm.mixin.Mixin;
@@ -20,7 +20,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.UUID;
 
 import static org.lexize.fsb.FSBClient.FSBPriority;
 
@@ -94,7 +93,7 @@ public class FiguraNetworkStuffMixin {
         };
 
         if (send) {
-            FSBClient.instance().sendC2SPacket(new FSBClearAvatarC2S());
+            FSBClient.instance().sendC2SPacket(new FSBDeleteAvatarC2S(avatar));
             ci.cancel();
         }
     }

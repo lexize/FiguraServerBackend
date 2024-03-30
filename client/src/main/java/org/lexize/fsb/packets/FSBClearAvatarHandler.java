@@ -12,6 +12,7 @@ public class FSBClearAvatarHandler extends FSBClientPacketHandler<FSBClearAvatar
 
     @Override
     public void handle(FSBClearAvatarS2C packet) {
+        if (!parent.allowAvatars()) return;
         AvatarManager.clearAvatars(packet.getOwner());
     }
 

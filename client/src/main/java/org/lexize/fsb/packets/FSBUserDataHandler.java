@@ -17,11 +17,14 @@ public class FSBUserDataHandler extends FSBClientPacketHandler<FSBUserDataS2C> {
 
     @Override
     public void handle(FSBUserDataS2C packet) {
+        if (!parent.allowAvatars()) return;
         UserData userData = FSBClient.getUserData().computeIfAbsent(packet.getOwner(), UserData::new);
         Pair<BitSet, BitSet> badges = new Pair<>(packet.getPrideBadges(), new BitSet());
         userData.loadBadges(badges);
-        if (!CacheAvatarLoader.checkAndLoad(packet.getAvatarHash(), userData)) {
-            parent.sendC2SPacket(new FSBFetchAvatarC2S(packet.getOwner()));
+        for (var entry: packet.getAvatarHashes().entrySet()) {
+            if (!CacheAvatarLoader.checkAndLoad(entry.getValue(), userData)) {
+                parent.sendC2SPacket(new FSBFetchAvatarC2S(packet.getOwner(), entry.getKey()));
+            }
         }
     }
 

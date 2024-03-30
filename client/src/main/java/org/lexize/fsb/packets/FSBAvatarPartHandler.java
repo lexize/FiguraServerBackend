@@ -13,6 +13,7 @@ public class FSBAvatarPartHandler extends FSBClientPacketHandler<FSBAvatarPartS2
 
     @Override
     public void handle(FSBAvatarPartS2C packet) {
+        if (!parent.allowAvatars()) return;
         try {
             parent.acceptAvatarPart(packet.getOwner(), packet.getData(), packet.isFinal(), packet.getHash(), packet.getId());
         } catch (IOException ignored) {}

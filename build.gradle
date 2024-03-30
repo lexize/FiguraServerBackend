@@ -4,12 +4,6 @@ plugins {
 }
 
 subprojects {
-//    apply plugin: "io.github.juuxel.loom-vineflower"
-    apply plugin: "dev.architectury.loom"
-
-    loom {
-        silentMojangMappingsLicense()
-    }
 
     repositories {
         maven { url 'https://maven.quiltmc.org/repository/release/' }
@@ -22,13 +16,44 @@ subprojects {
             url = uri("https://maven.figuramc.org/snapshots")
         }
         maven { url 'https://jitpack.io' }
+        mavenCentral()
+    }
+
+}
+
+project(":client") {
+    apply plugin: "dev.architectury.loom"
+
+    loom {
+        silentMojangMappingsLicense()
     }
 
     dependencies {
         minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
+        mappings loom.layered {
+            mappings("org.quiltmc:quilt-mappings:$minecraft_version+build.$mappings:intermediary-v2")
+            officialMojangMappings()
+        }
+    }
+}
+
+project(":fabric") {
+    apply plugin: "dev.architectury.loom"
+
+    loom {
+        silentMojangMappingsLicense()
     }
 
+    dependencies {
+        minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
+        mappings loom.layered {
+            mappings("org.quiltmc:quilt-mappings:$minecraft_version+build.$mappings:intermediary-v2")
+            officialMojangMappings()
+        }
+    }
 }
+
+
 
 allprojects {
     apply plugin: "java"

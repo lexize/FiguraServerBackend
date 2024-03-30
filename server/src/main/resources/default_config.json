@@ -6,6 +6,7 @@
 
   "avatar_upload_and_download": true,
   "max_avatar_size": 100000,
+  "avatar_gc_ticks": 5000,
 
   "pings": true,
   "pings_rate_limit": 20,

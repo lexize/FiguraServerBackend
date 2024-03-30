@@ -7,25 +7,32 @@ import org.lexize.fsb.utils.Identifier;
 
 import java.nio.charset.StandardCharsets;
 import java.util.BitSet;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class FSBUserDataS2C implements IFSBPacket {
     public static Identifier ID = new Identifier(FSB.MOD_ID, "user_data");
     private UUID owner;
     private BitSet prideBadges;
-    private String avatarHash;
+    private HashMap<String, String> avatarHashes;
 
-    public FSBUserDataS2C(UUID owner, BitSet prideBadges, String avatarHash) {
+    public FSBUserDataS2C(UUID owner, BitSet prideBadges, HashMap<String, String> avatarHashes) {
         this.owner = owner;
         this.prideBadges = prideBadges;
-        this.avatarHash = avatarHash;
+        this.avatarHashes = avatarHashes;
     }
 
     public FSBUserDataS2C(IFriendlyByteBuf buf) {
         owner = buf.readUUID();
         prideBadges = BitSet.valueOf(buf.readByteArray());
-        avatarHash = new String(buf.readByteArray(), StandardCharsets.UTF_8);
+        int hashesCount = buf.readVarInt();
+        avatarHashes = new HashMap<>();
+        for (int i = 0; i < hashesCount; i++) {
+            avatarHashes.put(
+                    new String(buf.readByteArray(), StandardCharsets.UTF_8),
+                    new String(buf.readByteArray(), StandardCharsets.UTF_8));
+        }
     }
 
     @Override
@@ -36,7 +43,11 @@ public class FSBUserDataS2C implements IFSBPacket {
     @Override
     public void write(IFriendlyByteBuf buf) {
         buf.writeUUID(owner);
-        buf.writeByteArray(avatarHash.getBytes(StandardCharsets.UTF_8));
+        buf.writeVarInt(avatarHashes.size());
+        for(var entry: avatarHashes.entrySet()) {
+            buf.writeByteArray(entry.getKey().getBytes(StandardCharsets.UTF_8));
+            buf.writeByteArray(entry.getValue().getBytes(StandardCharsets.UTF_8));
+        }
         buf.writeByteArray(prideBadges.toByteArray());
     }
 
@@ -48,7 +59,7 @@ public class FSBUserDataS2C implements IFSBPacket {
         return prideBadges;
     }
 
-    public String getAvatarHash() {
-        return avatarHash;
+    public HashMap<String, String> getAvatarHashes() {
+        return avatarHashes;
     }
 }

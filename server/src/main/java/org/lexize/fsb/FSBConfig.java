@@ -11,11 +11,16 @@ public class FSBConfig {
     private String databasePassword;
     @SerializedName("database_table_prefix")
     private String databaseTablePrefix;
+    @SerializedName("crash_if_db_errors")
+    private boolean crashIfDBErrors = false;
 
     @SerializedName("avatar_upload_and_download")
     private boolean avatarUploadAndDownload;
     @SerializedName("max_avatar_size")
     private int maxAvatarSize;
+    @SerializedName("avatar_gc_ticks")
+    private int avatarGCTicks = 5000;
+
 
     @SerializedName("pings")
     private boolean pings;
@@ -40,7 +45,7 @@ public class FSBConfig {
         return databaseTablePrefix;
     }
 
-    public boolean isAvatarUploadAndDownload() {
+    public boolean avatarFeaturesAllowed() {
         return avatarUploadAndDownload;
     }
 
@@ -48,7 +53,15 @@ public class FSBConfig {
         return maxAvatarSize;
     }
 
-    public boolean isPings() {
+    public boolean crashIfDBErrors() {
+        return crashIfDBErrors;
+    }
+
+    public int getAvatarGCTicks() {
+        return avatarGCTicks;
+    }
+
+    public boolean pingsAllowed() {
         return pings;
     }
 

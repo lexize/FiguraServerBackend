@@ -11,12 +11,10 @@ configurations {
 }
 
 dependencies {
-    mappings loom.layered {
-        mappings("org.quiltmc:quilt-mappings:$minecraft_version+build.$mappings:intermediary-v2")
-        officialMojangMappings()
-    }
+    testImplementation("org.xerial:sqlite-jdbc:3.45.2.0")
 
-    common(project(path: ":common", configuration: "namedElements")) { transitive false }
+    implementation(project(path: ":common"))
+    implementation('com.google.code.gson:gson:2.10.1')
     shadowCommon(project(path: ":common")) { transitive false }
 }
 
