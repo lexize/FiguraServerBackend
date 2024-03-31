@@ -4,36 +4,38 @@ import com.google.gson.annotations.SerializedName;
 
 public class FSBConfig {
     @SerializedName("database_connection_string")
-    private String databaseConnectionString;
+    private String databaseConnectionString = "jdbc:sqlite:fsb_database.db";
     @SerializedName("database_login")
-    private String databaseLogin;
+    private String databaseLogin = null;
     @SerializedName("database_password")
-    private String databasePassword;
+    private String databasePassword = null;
     @SerializedName("database_table_prefix")
-    private String databaseTablePrefix;
-    @SerializedName("crash_if_db_errors")
-    private boolean crashIfDBErrors = false;
+    private String databaseTablePrefix = "FSB_";
 
     @SerializedName("avatar_upload_and_download")
-    private boolean avatarUploadAndDownload;
+    private boolean avatarUploadAndDownload = true;
     @SerializedName("max_avatar_size")
-    private int maxAvatarSize;
+    private int maxAvatarSize = 100000;
+    @SerializedName("max_avatars")
+    private int maxAvatars = 1;
     @SerializedName("avatar_size_limit_message")
-    private String avatarSizeLimitMessage;
+    private String avatarSizeLimitMessage = "Avatar size can't be more than 100KB.";
+    @SerializedName("avatar_count_limit_message")
+    private String avatarCountLimitMessage = "You can't have more than 1 avatar.";
     @SerializedName("avatar_gc_ticks")
     private int avatarGCTicks = 5000;
 
 
     @SerializedName("pings")
-    private boolean pings;
+    private boolean pings = true;
     @SerializedName("pings_rate_limit")
-    private int pingsRateLimit;
+    private int pingsRateLimit = 20;
     @SerializedName("ping_rate_limit_message")
-    private String pingRateLimitMessage;
+    private String pingRateLimitMessage = "You can't send more than 20 pings per second.";
     @SerializedName("pings_size_limit")
-    private int pingsSizeLimit;
+    private int pingsSizeLimit = 10000;
     @SerializedName("ping_size_limit_message")
-    private String pingSizeLimitMessage;
+    private String pingSizeLimitMessage = "You can't send more than 10KB of pings per second.";
     public String getDatabaseConnectionString() {
         return databaseConnectionString;
     }
@@ -58,8 +60,16 @@ public class FSBConfig {
         return maxAvatarSize;
     }
 
-    public boolean crashIfDBErrors() {
-        return crashIfDBErrors;
+    public int getMaxAvatars() {
+        return maxAvatars;
+    }
+
+    public String getAvatarSizeLimitMessage() {
+        return avatarSizeLimitMessage;
+    }
+
+    public String getAvatarCountLimitMessage() {
+        return avatarCountLimitMessage;
     }
 
     public int getAvatarGCTicks() {

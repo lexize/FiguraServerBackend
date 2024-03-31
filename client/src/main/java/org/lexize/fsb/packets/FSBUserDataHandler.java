@@ -23,7 +23,7 @@ public class FSBUserDataHandler extends FSBClientPacketHandler<FSBUserDataS2C> {
         userData.loadBadges(badges);
         for (var entry: packet.getAvatarHashes().entrySet()) {
             if (!CacheAvatarLoader.checkAndLoad(entry.getValue(), userData)) {
-                parent.sendC2SPacket(new FSBFetchAvatarC2S(packet.getOwner(), entry.getKey()));
+                parent.sendC2SPacket(new FSBFetchAvatarC2S(entry.getValue()));
             }
         }
     }

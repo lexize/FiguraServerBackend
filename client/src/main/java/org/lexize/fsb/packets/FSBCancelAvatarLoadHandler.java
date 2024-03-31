@@ -12,7 +12,7 @@ public class FSBCancelAvatarLoadHandler extends FSBClientPacketHandler<FSBCancel
 
     @Override
     public void handle(FSBCancelAvatarLoadS2C packet) {
-        parent.cancelAvatarLoad(packet.getOwner());
+        parent.cancelAvatarLoad(packet.getStreamId());
     }
 
     @Override

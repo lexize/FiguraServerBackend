@@ -15,7 +15,7 @@ public class FSBAvatarPartHandler extends FSBClientPacketHandler<FSBAvatarPartS2
     public void handle(FSBAvatarPartS2C packet) {
         if (!parent.allowAvatars()) return;
         try {
-            parent.acceptAvatarPart(packet.getOwner(), packet.getData(), packet.isFinal(), packet.getHash(), packet.getId());
+            parent.acceptAvatarPart(packet.getTarget(), packet.getId(), packet.getData(), packet.isFinal());
         } catch (IOException ignored) {}
     }
 

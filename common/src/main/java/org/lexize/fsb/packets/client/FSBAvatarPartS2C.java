@@ -10,27 +10,22 @@ import java.util.UUID;
 
 public class FSBAvatarPartS2C implements IFSBPacket {
     public static Identifier ID = new Identifier(FSB.MOD_ID, "avatar_part");
-    private UUID owner;
+    private UUID target;
+    private UUID streamId;
     private boolean isFinal;
     private byte[] data;
-    private String hash;
-    private String id;
 
-    public FSBAvatarPartS2C(UUID owner, boolean isFinal, byte[] data, String hash, String id) {
-        this.owner = owner;
+    public FSBAvatarPartS2C(UUID target, UUID streamId, boolean isFinal, byte[] data) {
+        this.target = target;
+        this.streamId = streamId;
         this.isFinal = isFinal;
-        this.id = id;
         this.data = data;
-        this.hash = hash;
     }
 
     public FSBAvatarPartS2C(IFriendlyByteBuf buf) {
-        this.owner = buf.readUUID();
-        this.id = new String(buf.readByteArray(), StandardCharsets.UTF_8);
+        this.target = buf.readUUID();
+        this.streamId = buf.readUUID();
         this.isFinal = buf.readByte() == 1;
-        if (this.isFinal) {
-            this.hash = new String(buf.readByteArray(), StandardCharsets.UTF_8);
-        }
         this.data = buf.readByteArray();
     }
 
@@ -41,19 +36,14 @@ public class FSBAvatarPartS2C implements IFSBPacket {
 
     @Override
     public void write(IFriendlyByteBuf buf) {
-        buf.writeUUID(owner);
+        buf.writeUUID(target);
+        buf.writeUUID(streamId);
         buf.writeByte(isFinal ? 1 : 0);
-        if (isFinal) {
-            buf.writeByteArray(hash.getBytes(StandardCharsets.UTF_8));
-        }
-        else {
-            buf.writeByte(0);
-        }
         buf.writeByteArray(data);
     }
 
-    public UUID getOwner() {
-        return owner;
+    public UUID getTarget() {
+        return target;
     }
 
     public boolean isFinal() {
@@ -64,11 +54,7 @@ public class FSBAvatarPartS2C implements IFSBPacket {
         return data;
     }
 
-    public String getHash() {
-        return hash;
-    }
-
-    public String getId() {
-        return id;
+    public UUID getId() {
+        return streamId;
     }
 }

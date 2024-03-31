@@ -10,14 +10,14 @@ import java.util.UUID;
 public class FSBCancelAvatarLoadS2C implements IFSBPacket {
     public static final Identifier ID = new Identifier(FSB.MOD_ID, "cancel_avatar_load");
 
-    private UUID owner;
+    private UUID streamID;
 
-    public FSBCancelAvatarLoadS2C(UUID owner) {
-        this.owner = owner;
+    public FSBCancelAvatarLoadS2C(UUID streamID) {
+        this.streamID = streamID;
     }
 
     public FSBCancelAvatarLoadS2C(IFriendlyByteBuf buf) {
-        this.owner = buf.readUUID();
+        this.streamID = buf.readUUID();
     }
 
     @Override
@@ -27,10 +27,10 @@ public class FSBCancelAvatarLoadS2C implements IFSBPacket {
 
     @Override
     public void write(IFriendlyByteBuf buf) {
-        buf.writeUUID(owner);
+        buf.writeUUID(streamID);
     }
 
-    public UUID getOwner() {
-        return owner;
+    public UUID getStreamId() {
+        return streamID;
     }
 }

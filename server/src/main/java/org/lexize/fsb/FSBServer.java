@@ -4,12 +4,17 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.lexize.fsb.packets.IFSBPacket;
 import org.lexize.fsb.packets.client.FSBHandshakeS2C;
+import org.lexize.fsb.packets.client.FSBNotifyS2C;
 import org.lexize.fsb.packets.server.FSBServerPacketHandler;
 import org.lexize.fsb.utils.Identifier;
+import org.lexize.fsb.utils.Pair;
+import org.lexize.fsb.utils.Utils;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
@@ -23,6 +28,7 @@ public abstract class FSBServer {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     protected final HashMap<Identifier, FSBServerPacketHandler<?>> SERVER_PACKET_HANDLERS = new HashMap<>();
     private final HashMap<UUID, PingCounter> PING_COUNTERS = new HashMap<>();
+    private final HashMap<Pair<UUID, String>, ByteArrayOutputStream> AVATAR_PARTS = new HashMap<>();
     private FSBConfig config;
     private FSBAvatarManager avatarManager;
     private FSBDatabase database;
@@ -69,15 +75,14 @@ public abstract class FSBServer {
         readConfig();
         allowAvatars = config.avatarFeaturesAllowed();
         try {
+            avatarManager = new FSBAvatarManager(this);
             database = new FSBDatabase(getConfig());
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Unable to establish DB connection", e);
-            if(config.crashIfDBErrors()) {
-                throw new RuntimeException(e);
-            }
-            else allowAvatars = false;
+            allowAvatars = false;
+            LOGGER.log(Level.SEVERE, "Unable to establish DB connection");
+            throw new RuntimeException(e);
         }
-        avatarManager = new FSBAvatarManager(this);
+        allowPings = config.pingsAllowed();
         initializeServerPackets();
     }
 
@@ -94,7 +99,40 @@ public abstract class FSBServer {
     }
 
     public boolean allowAvatars() {
-        return allowPings;
+        return allowAvatars;
+    }
+
+    public void acceptAvatarPart(UUID owner, String id, byte[] avatarData, boolean isFinal) throws IOException, SQLException {
+        Pair<UUID, String> key = new Pair<>(owner, id);
+        boolean firstRead = !AVATAR_PARTS.containsKey(key);
+        byte[] data;
+        String prevHash = database.getAvatarHash(owner, id);
+        if (firstRead && isFinal) {
+            data = avatarData;
+        }
+        else if (isFinal) {
+            ByteArrayOutputStream baos = AVATAR_PARTS.remove(key);
+            baos.write(avatarData);
+            data = baos.toByteArray();
+        }
+        else {
+            ByteArrayOutputStream baos = AVATAR_PARTS.computeIfAbsent(key, (u) -> new ByteArrayOutputStream());
+            baos.write(avatarData);
+            if (baos.size() > config.getMaxAvatarSize()) {
+                sendS2CPacket(owner, new FSBNotifyS2C(config.getAvatarSizeLimitMessage(), FSBNotifyS2C.NotificationType.ERROR));
+                AVATAR_PARTS.remove(key);
+            }
+            return;
+        }
+        if (data.length > config.getMaxAvatarSize()) {
+            sendS2CPacket(owner, new FSBNotifyS2C(config.getAvatarSizeLimitMessage(), FSBNotifyS2C.NotificationType.ERROR));
+            return;
+        }
+        String hash = avatarManager.addAvatar(data);
+        database.uploadAvatar(hash, Utils.uuidToHex(owner), id, data);
+        if (prevHash != null) {
+            avatarManager.release(prevHash);
+        }
     }
 
     protected abstract void initializeServerPackets();
@@ -107,7 +145,7 @@ public abstract class FSBServer {
     public abstract List<UUID> getPlayers();
 
     public void onPlayerJoin(UUID uuid) {
-        sendS2CPacket(uuid, new FSBHandshakeS2C(config.avatarFeaturesAllowed(), config.pingsAllowed()));
+        sendS2CPacket(uuid, new FSBHandshakeS2C(allowAvatars(), allowPings()));
     }
 
     public PingCounter getCounter(UUID player) {

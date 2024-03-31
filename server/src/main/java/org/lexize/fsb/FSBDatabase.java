@@ -1,11 +1,15 @@
 package org.lexize.fsb;
 
-import java.io.IOException;
-import java.io.InputStream;
+import org.lexize.fsb.utils.Pair;
+import org.lexize.fsb.utils.Utils;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 public class FSBDatabase {
     private final Connection conn;
@@ -22,13 +26,13 @@ public class FSBDatabase {
         tablePrefix = config.getDatabaseTablePrefix();
         var statement = conn.createStatement();
         statement.execute(
-                "CREATE TABLE IF NOT EXISTS %s_USERDATA (id VARCHAR(16), badges VARCHAR(4), PRIMARY KEY(id))"
+                "CREATE TABLE IF NOT EXISTS %s_USERDATA (id VARCHAR(32), badges VARCHAR(4), PRIMARY KEY(id))"
                 .formatted(tablePrefix));
         statement.execute(
                 "CREATE TABLE IF NOT EXISTS %s_EQUIPPED_AVATARS (id VARCHAR(32), hash VARCHAR(64), PRIMARY KEY(id, hash))"
                 .formatted(tablePrefix));
         statement.execute(
-                "CREATE TABLE IF NOT EXISTS %s_AVATARS (hash VARCHAR(64), id VARCHAR(255), owner VARCHAR(32), data LONGBLOB, PRIMARY KEY (hash, id, owner))"
+                "CREATE TABLE IF NOT EXISTS %s_AVATARS (hash VARCHAR(64), id VARCHAR(255), owner VARCHAR(32), data LONGBLOB, PRIMARY KEY (id, owner))"
                 .formatted(tablePrefix));
         statement.close();
     }
@@ -42,6 +46,49 @@ public class FSBDatabase {
             result.close();
             statement.close();
             return data;
+        }
+        return null;
+    }
+
+    public Pair<UUID, String> getAvatarIdAndOwner(String hash) throws SQLException {
+        var statement = conn.prepareStatement("SELECT owner, id FROM %s_AVATARS WHERE hash = ?".formatted(tablePrefix));
+        statement.setString(1, hash);
+        var result = statement.executeQuery();
+        if (result.next()) {
+            UUID owner = UUID.fromString(result.getString(1));
+            String id = result.getString(2);
+            result.close();
+            statement.close();
+            return new Pair<>(owner, id);
+        }
+        return null;
+    }
+
+    public String getAvatarHash(UUID owner, String id) throws SQLException {
+        var statement = conn.prepareStatement("SELECT hash FROM %s_AVATARS WHERE owner = ? AND id = ?".formatted(tablePrefix));
+        statement.setString(1, Utils.uuidToHex(owner));
+        statement.setString(2, id);
+        var result = statement.executeQuery();
+        if (result.next()) {
+            String hash = result.getString(1);
+            result.close();
+            statement.close();
+            return hash;
+        }
+        return null;
+    }
+
+    public Pair<byte[], String> getAvatarData(String owner, String id) throws SQLException {
+        var statement = conn.prepareStatement("SELECT data, hash FROM %s_AVATARS WHERE owner = ? AND id = ?".formatted(tablePrefix));
+        statement.setString(1, owner);
+        statement.setString(1, id);
+        var result = statement.executeQuery();
+        if (result.next()) {
+            byte[] data = result.getBytes(1);
+            String hash = result.getString(2);
+            result.close();
+            statement.close();
+            return new Pair<>(data, hash);
         }
         return null;
     }
@@ -71,6 +118,23 @@ public class FSBDatabase {
             return count > 0;
         }
         return false;
+    }
+
+    public List<String> ownedAvatars(String owner) throws SQLException {
+        var statement = conn.prepareStatement("SELECT count(id) FROM %s_AVATARS WHERE owner = ?".formatted(tablePrefix));
+        statement.setString(1, owner);
+        var result = statement.executeQuery();
+        ArrayList<String> avatars = new ArrayList<>();
+        while (result.next()) {
+            avatars.add(result.getString(1));
+        }
+        result.close();
+        statement.close();
+        return avatars;
+    }
+
+    public int ownedAvatarsCount(String owner) throws SQLException {
+        return ownedAvatars(owner).size();
     }
 
     public void uploadAvatar(String hash, String owner, String id, byte[] data) throws SQLException {

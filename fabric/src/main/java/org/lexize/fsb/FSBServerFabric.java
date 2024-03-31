@@ -70,6 +70,7 @@ public class FSBServerFabric extends FSBServer implements DedicatedServerModInit
 
         @Override
         public void receive(MinecraftServer server, ServerPlayer player, ServerGamePacketListenerImpl l, FriendlyByteBuf buf, PacketSender responseSender) {
+            if (player.getUUID().version() != 4) return;
             T packet = handler.serialize(new FriendlyBufWrapper(buf));
             handler.handle(player.getUUID(), packet);
         }

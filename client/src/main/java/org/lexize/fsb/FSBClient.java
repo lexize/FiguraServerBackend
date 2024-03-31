@@ -8,15 +8,20 @@ import org.figuramc.figura.avatar.AvatarManager;
 import org.figuramc.figura.avatar.UserData;
 import org.figuramc.figura.avatar.local.CacheAvatarLoader;
 import org.figuramc.figura.config.ConfigType;
+import org.figuramc.figura.gui.FiguraToast;
 import org.lexize.fsb.packets.*;
 import org.lexize.fsb.packets.client.*;
 import org.lexize.fsb.packets.client.FSBUserDataS2C;
 import org.lexize.fsb.utils.Identifier;
+import org.lexize.fsb.utils.Pair;
+import org.lexize.fsb.utils.Utils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,18 +57,6 @@ public abstract class FSBClient {
         enumList = FSB_PRIORITY_TRANSLATIONS;
         enumTooltip = FSB_PRIORITY_TOOLTIPS_TRANSLATIONS;
     }};
-    private static final ConfigType.EnumConfig SYNC_PRIORITY = new ConfigType.EnumConfig("fsb.config.sync", FSB_CATEGORY, 0, 2) {{
-        name = Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "sync");
-        tooltip = Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "sync.tooltip");
-        enumList = List.of(
-                Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "sync.figura"),
-                Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "sync.fsb")
-        );
-        enumTooltip = List.of(
-                Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "sync.figura.tooltip"),
-                Component.translatable(FSB_CONFIG_TRANSLATION_KEY + "sync.fsb.tooltip")
-        );
-    }};
 
     public final HashMap<Identifier, FSBClientPacketHandler<?>> CLIENT_HANDLERS = new HashMap<>();
 
@@ -71,7 +64,7 @@ public abstract class FSBClient {
     private boolean connected = false;
     private boolean allowAvatars = false;
     private boolean allowPings = false;
-    private final HashMap<UUID, ByteArrayOutputStream> avatarDataBuffers = new HashMap<>();
+    private final HashMap<UUID, Pair<UUID, ByteArrayOutputStream>> avatarDataBuffers = new HashMap<>();
     public FSBClient() {
         CLIENT_HANDLERS.put(FSBHandshakeS2C.ID, new FSBClientHandshakeHandler(this));
         CLIENT_HANDLERS.put(FSBPingS2C.ID, new FSBClientPingHandler(this));
@@ -110,25 +103,35 @@ public abstract class FSBClient {
         avatarDataBuffers.clear();
     }
 
-    public void acceptAvatarPart(UUID avatarOwner, byte[] avatarData, boolean isFinal, String hash, String id) throws IOException {
+    public void acceptAvatarPart(UUID streamId, UUID target, byte[] avatarData, boolean isFinal) throws IOException {
         ByteArrayInputStream bais;
-        boolean firstRead = !avatarDataBuffers.containsKey(avatarOwner);
+        boolean firstRead = !avatarDataBuffers.containsKey(streamId);
+        MessageDigest digest;
+        try {
+            digest = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+        String hash;
         if (firstRead && isFinal) {
+            hash = Utils.hexFromBytes(digest.digest(avatarData));
             bais = new ByteArrayInputStream(avatarData);
         }
         else if (isFinal) {
-            ByteArrayOutputStream baos = avatarDataBuffers.remove(avatarOwner);
+            ByteArrayOutputStream baos = avatarDataBuffers.remove(streamId).right();
             baos.write(avatarData);
-            bais = new ByteArrayInputStream(baos.toByteArray());
+            byte[] data = baos.toByteArray();
+            hash = Utils.hexFromBytes(digest.digest(data));
+            bais = new ByteArrayInputStream(data);
         }
         else {
-            ByteArrayOutputStream baos = avatarDataBuffers.computeIfAbsent(avatarOwner, (u) -> new ByteArrayOutputStream());
-            baos.write(avatarData);
+            Pair<UUID, ByteArrayOutputStream> pair = avatarDataBuffers.computeIfAbsent(streamId, (u) -> new Pair<>(target, new ByteArrayOutputStream()));
+            pair.right().write(avatarData);
             return;
         }
         CompoundTag avatarCompound = NbtIo.readCompressed(bais, NbtAccounter.unlimitedHeap());
         CacheAvatarLoader.save(hash, avatarCompound);
-        getUserData().computeIfAbsent(avatarOwner, UserData::new).loadAvatar(avatarCompound);
+        getUserData().computeIfAbsent(target, UserData::new).loadAvatar(avatarCompound);
     }
 
     public void cancelAvatarLoad(UUID avatarOwner) {
