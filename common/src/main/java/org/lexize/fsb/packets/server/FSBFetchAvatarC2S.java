@@ -12,8 +12,10 @@ public class FSBFetchAvatarC2S implements IFSBPacket {
     public static Identifier ID = new Identifier(FSB.MOD_ID, "fetch_avatar");
 
     private String hash;
-    public FSBFetchAvatarC2S(String hash) {
+    private UUID streamId;
+    public FSBFetchAvatarC2S(String hash, UUID streamId) {
         this.hash = hash;
+        this.streamId = streamId;
     }
 
     public FSBFetchAvatarC2S(IFriendlyByteBuf buf) {
@@ -28,6 +30,7 @@ public class FSBFetchAvatarC2S implements IFSBPacket {
     @Override
     public void write(IFriendlyByteBuf buf) {
         buf.writeByteArray(hash.getBytes(StandardCharsets.UTF_8));
+        buf.writeUUID(streamId);
     }
 
     public String getHash() {

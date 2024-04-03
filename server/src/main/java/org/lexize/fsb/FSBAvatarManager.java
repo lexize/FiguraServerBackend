@@ -80,15 +80,10 @@ public class FSBAvatarManager {
     private static class AvatarStreaming {
         private int position;
         private UUID receiver;
-        private UUID target;
         private UUID id;
 
         public int getPosition() {
             return position;
-        }
-
-        public UUID getTarget() {
-            return target;
         }
 
         public UUID getReceiver() {

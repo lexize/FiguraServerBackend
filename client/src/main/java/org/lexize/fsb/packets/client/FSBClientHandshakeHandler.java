@@ -1,7 +1,6 @@
-package org.lexize.fsb.packets;
+package org.lexize.fsb.packets.client;
 
 import org.lexize.fsb.FSBClient;
-import org.lexize.fsb.packets.client.FSBHandshakeS2C;
 import org.lexize.fsb.packets.server.FSBHandshakeC2S;
 import org.lexize.fsb.utils.IFriendlyByteBuf;
 
@@ -13,7 +12,7 @@ public class FSBClientHandshakeHandler extends FSBClientPacketHandler<FSBHandsha
 
     @Override
     public void handle(FSBHandshakeS2C packet) {
-        parent.onConnect(packet.allowAvatars(), packet.allowPings());
+        parent.onConnectFSB(packet.allowAvatars(), packet.allowPings());
         parent.sendC2SPacket(new FSBHandshakeC2S());
     }
 

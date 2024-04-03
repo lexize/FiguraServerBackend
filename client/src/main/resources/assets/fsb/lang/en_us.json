@@ -12,5 +12,9 @@
   "fsb.config.priority.fsb_figura": "FSB; Figura",
   "fsb.config.priority.fsb_figura.tooltip": "Uses FSB if server has it, otherwise trying to use Figura's backend",
   "fsb.config.priority.fsb": "FSB",
-  "fsb.config.priority.fsb.tooltip": "Uses only FSB for this setting"
+  "fsb.config.priority.fsb.tooltip": "Uses only FSB for this setting",
+  "fsb.security.wrong_ehash": "Invalid EHash(es).",
+  "fsb.security.wrong_ehash.desc": "EHash(es) of avatar(s) [%s] sent by server is invalid.\nPlease check if epassword matches on all your clients.\nIf it does, server might have been replaced your avatar in it's database.\nIf does not, set the same epassword on your clients and reupload avatar.",
+  "fsb.security.wrong_hash": "Invalid Hash.",
+  "fsb.security.wrong_hash.desc": "Server sent you a hash that doesn't match hash of avatar data."
 }

@@ -60,7 +60,7 @@ public class FiguraNetworkStuffMixin {
 
     @Inject(
             at = @At(value = "HEAD"),
-            method = "uploadAvatar", cancellable = true)
+            method = "uploadAvatar", cancellable = true, remap = false)
     private static void onAvatarUpload(Avatar avatar, CallbackInfo ci) throws IOException {
         if (avatar == null || avatar.nbt == null)
             return;
@@ -83,7 +83,7 @@ public class FiguraNetworkStuffMixin {
         }
     }
 
-    @Inject( at = @At(value = "HEAD"), method = "deleteAvatar", cancellable = true)
+    @Inject( at = @At(value = "HEAD"), method = "deleteAvatar", cancellable = true, remap = false)
     private static void onAvatarDelete(String avatar, CallbackInfo ci) {
         FSBPriority priority = FSBClient.getAvatarsPriority();
         boolean send = FSBClient.instance().allowAvatars() && switch (priority) {
@@ -98,7 +98,7 @@ public class FiguraNetworkStuffMixin {
         }
     }
 
-    @Inject(at = @At("HEAD"), method = "getUser", cancellable = true)
+    @Inject(at = @At("HEAD"), method = "getUser", cancellable = true, remap = false)
     private static void onUserFetch(UserData user, CallbackInfo ci) {
         FSBPriority priority = FSBClient.getAvatarsPriority();
         boolean send = FSBClient.instance().allowAvatars() && switch (priority) {

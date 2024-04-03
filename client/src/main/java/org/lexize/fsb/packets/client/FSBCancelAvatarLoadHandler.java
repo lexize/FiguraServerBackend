@@ -1,7 +1,6 @@
-package org.lexize.fsb.packets;
+package org.lexize.fsb.packets.client;
 
 import org.lexize.fsb.FSBClient;
-import org.lexize.fsb.packets.client.FSBCancelAvatarLoadS2C;
 import org.lexize.fsb.utils.IFriendlyByteBuf;
 
 public class FSBCancelAvatarLoadHandler extends FSBClientPacketHandler<FSBCancelAvatarLoadS2C> {

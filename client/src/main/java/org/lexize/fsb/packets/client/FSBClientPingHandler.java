@@ -1,10 +1,9 @@
-package org.lexize.fsb.packets;
+package org.lexize.fsb.packets.client;
 
 import org.figuramc.figura.avatar.Avatar;
 import org.figuramc.figura.avatar.AvatarManager;
 import org.figuramc.figura.backend2.NetworkStuff;
 import org.lexize.fsb.FSBClient;
-import org.lexize.fsb.packets.client.FSBPingS2C;
 import org.lexize.fsb.utils.IFriendlyByteBuf;
 
 import static org.lexize.fsb.FSBClient.FSBPriority;

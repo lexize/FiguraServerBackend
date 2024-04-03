@@ -2,12 +2,14 @@ package org.lexize.fsb;
 
 import io.netty.buffer.Unpooled;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.FriendlyByteBuf;
-import org.lexize.fsb.packets.FSBClientPacketHandler;
+import net.minecraft.resources.ResourceLocation;
+import org.lexize.fsb.packets.client.FSBClientPacketHandler;
 import org.lexize.fsb.packets.IFSBPacket;
 import org.lexize.fsb.utils.FriendlyBufWrapper;
 
@@ -36,6 +38,22 @@ public class FSBClientFabric extends FSBClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         initializeClientPackets();
+        ClientPlayConnectionEvents.JOIN.register(
+                new ResourceLocation(FSB.MOD_ID, "player_join_listener"),
+                this::onPlayConnect
+                );
+        ClientPlayConnectionEvents.DISCONNECT.register(
+                new ResourceLocation(FSB.MOD_ID, "player_join_listener"),
+                this::onPlayDisconnect
+        );
+    }
+
+    private void onPlayConnect(ClientPacketListener handler, PacketSender sender, Minecraft client) {
+        onConnectServer(handler.getConnection().getRemoteAddress());
+    }
+
+    private void onPlayDisconnect(ClientPacketListener clientPacketListener, Minecraft minecraft) {
+        onDisconnect();
     }
 
     private record ClientListener<T extends IFSBPacket>(

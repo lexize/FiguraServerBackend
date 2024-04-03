@@ -1,7 +1,6 @@
-package org.lexize.fsb.packets;
+package org.lexize.fsb.packets.client;
 
 import org.lexize.fsb.FSBClient;
-import org.lexize.fsb.packets.client.FSBAvatarPartS2C;
 import org.lexize.fsb.utils.IFriendlyByteBuf;
 
 import java.io.IOException;
@@ -15,7 +14,7 @@ public class FSBAvatarPartHandler extends FSBClientPacketHandler<FSBAvatarPartS2
     public void handle(FSBAvatarPartS2C packet) {
         if (!parent.allowAvatars()) return;
         try {
-            parent.acceptAvatarPart(packet.getTarget(), packet.getId(), packet.getData(), packet.isFinal());
+            parent.acceptAvatarPart(packet.getId(), packet.getData(), packet.isFinal());
         } catch (IOException ignored) {}
     }
 

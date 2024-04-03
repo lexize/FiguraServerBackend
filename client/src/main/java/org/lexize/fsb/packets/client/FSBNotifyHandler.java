@@ -1,8 +1,7 @@
-package org.lexize.fsb.packets;
+package org.lexize.fsb.packets.client;
 
 import org.figuramc.figura.gui.FiguraToast;
 import org.lexize.fsb.FSBClient;
-import org.lexize.fsb.packets.client.FSBNotifyS2C;
 import org.lexize.fsb.utils.IFriendlyByteBuf;
 
 public class FSBNotifyHandler extends FSBClientPacketHandler<FSBNotifyS2C> {

@@ -10,20 +10,16 @@ import java.util.UUID;
 
 public class FSBAvatarPartS2C implements IFSBPacket {
     public static Identifier ID = new Identifier(FSB.MOD_ID, "avatar_part");
-    private UUID target;
     private UUID streamId;
-    private boolean isFinal;
     private byte[] data;
-
-    public FSBAvatarPartS2C(UUID target, UUID streamId, boolean isFinal, byte[] data) {
-        this.target = target;
+    private boolean isFinal;
+    public FSBAvatarPartS2C(UUID streamId, byte[] data, boolean isFinal) {
         this.streamId = streamId;
-        this.isFinal = isFinal;
         this.data = data;
+        this.isFinal = isFinal;
     }
 
     public FSBAvatarPartS2C(IFriendlyByteBuf buf) {
-        this.target = buf.readUUID();
         this.streamId = buf.readUUID();
         this.isFinal = buf.readByte() == 1;
         this.data = buf.readByteArray();
@@ -36,18 +32,9 @@ public class FSBAvatarPartS2C implements IFSBPacket {
 
     @Override
     public void write(IFriendlyByteBuf buf) {
-        buf.writeUUID(target);
         buf.writeUUID(streamId);
         buf.writeByte(isFinal ? 1 : 0);
         buf.writeByteArray(data);
-    }
-
-    public UUID getTarget() {
-        return target;
-    }
-
-    public boolean isFinal() {
-        return isFinal;
     }
 
     public byte[] getData() {
@@ -56,5 +43,9 @@ public class FSBAvatarPartS2C implements IFSBPacket {
 
     public UUID getId() {
         return streamId;
+    }
+
+    public boolean isFinal() {
+        return isFinal;
     }
 }

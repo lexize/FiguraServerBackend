@@ -1,8 +1,7 @@
-package org.lexize.fsb.packets;
+package org.lexize.fsb.packets.client;
 
 import org.figuramc.figura.avatar.AvatarManager;
 import org.lexize.fsb.FSBClient;
-import org.lexize.fsb.packets.client.FSBClearAvatarS2C;
 import org.lexize.fsb.utils.IFriendlyByteBuf;
 
 public class FSBClearAvatarHandler extends FSBClientPacketHandler<FSBClearAvatarS2C> {

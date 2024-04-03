@@ -1,6 +1,7 @@
-package org.lexize.fsb.packets;
+package org.lexize.fsb.packets.client;
 
 import org.lexize.fsb.FSBClient;
+import org.lexize.fsb.packets.IFSBPacket;
 import org.lexize.fsb.utils.IFriendlyByteBuf;
 
 public abstract class FSBClientPacketHandler<T extends IFSBPacket> {
