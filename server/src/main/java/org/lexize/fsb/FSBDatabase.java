@@ -32,7 +32,7 @@ public class FSBDatabase {
                 "CREATE TABLE IF NOT EXISTS %s_EQUIPPED_AVATARS (id VARCHAR(32), hash VARCHAR(64), PRIMARY KEY(id, hash))"
                 .formatted(tablePrefix));
         statement.execute(
-                "CREATE TABLE IF NOT EXISTS %s_AVATARS (hash VARCHAR(64), id VARCHAR(255), owner VARCHAR(32), data LONGBLOB, PRIMARY KEY (id, owner))"
+                "CREATE TABLE IF NOT EXISTS %s_AVATARS (hash VARCHAR(64), ehash VARCHAR(64), id VARCHAR(255), owner VARCHAR(32), data LONGBLOB, PRIMARY KEY (id, owner))"
                 .formatted(tablePrefix));
         statement.close();
     }
@@ -64,16 +64,30 @@ public class FSBDatabase {
         return null;
     }
 
-    public String getAvatarHash(UUID owner, String id) throws SQLException {
-        var statement = conn.prepareStatement("SELECT hash FROM %s_AVATARS WHERE owner = ? AND id = ?".formatted(tablePrefix));
+    public Pair<String, String> getAvatarHash(UUID owner, String id) throws SQLException {
+        var statement = conn.prepareStatement("SELECT hash, ehash FROM %s_AVATARS WHERE owner = ? AND id = ?".formatted(tablePrefix));
         statement.setString(1, Utils.uuidToHex(owner));
         statement.setString(2, id);
         var result = statement.executeQuery();
         if (result.next()) {
             String hash = result.getString(1);
+            String ehash = result.getString(2);
             result.close();
             statement.close();
-            return hash;
+            return new Pair<>(hash, ehash);
+        }
+        return null;
+    }
+
+    public String getAvatarEHash(String hash) throws SQLException {
+        var statement = conn.prepareStatement("SELECT ehash FROM %s_AVATARS WHERE hash = ?".formatted(tablePrefix));
+        statement.setString(1, hash);
+        var result = statement.executeQuery();
+        if (result.next()) {
+            String ehash = result.getString(2);
+            result.close();
+            statement.close();
+            return ehash;
         }
         return null;
     }
@@ -137,21 +151,23 @@ public class FSBDatabase {
         return ownedAvatars(owner).size();
     }
 
-    public void uploadAvatar(String hash, String owner, String id, byte[] data) throws SQLException {
+    public void uploadAvatar(String hash, String ehash, String owner, String id, byte[] data) throws SQLException {
         PreparedStatement statement;
         if (avatarExists(owner, id)) {
-            statement = conn.prepareStatement("UPDATE %s_AVATARS SET hash = ?, data = ? WHERE owner = ? AND id = ?".formatted(tablePrefix));
+            statement = conn.prepareStatement("UPDATE %s_AVATARS SET hash = ?, ehash = ?, data = ? WHERE owner = ? AND id = ?".formatted(tablePrefix));
             statement.setString(1, hash);
-            statement.setBytes(2, data);
-            statement.setString(3, owner);
-            statement.setString(4, id);
+            statement.setString(2, ehash);
+            statement.setBytes(3, data);
+            statement.setString(4, owner);
+            statement.setString(5, id);
         }
         else {
-            statement = conn.prepareStatement("INSERT INTO %s_AVATARS(hash, data, owner, id) VALUES (?, ?, ?, ?)".formatted(tablePrefix));
+            statement = conn.prepareStatement("INSERT INTO %s_AVATARS(hash, ehash, data, owner, id) VALUES (?, ?, ?, ?, ?)".formatted(tablePrefix));
             statement.setString(1, hash);
-            statement.setBytes(2, data);
-            statement.setString(3, owner);
-            statement.setString(4, id);
+            statement.setString(2, ehash);
+            statement.setBytes(3, data);
+            statement.setString(4, owner);
+            statement.setString(5, id);
         }
         statement.execute();
     }

@@ -102,11 +102,11 @@ public abstract class FSBServer {
         return allowAvatars;
     }
 
-    public void acceptAvatarPart(UUID owner, String id, byte[] avatarData, boolean isFinal) throws IOException, SQLException {
+    public void acceptAvatarPart(UUID owner, String id, byte[] avatarData, boolean isFinal, String ehash) throws IOException, SQLException {
         Pair<UUID, String> key = new Pair<>(owner, id);
         boolean firstRead = !AVATAR_PARTS.containsKey(key);
         byte[] data;
-        String prevHash = database.getAvatarHash(owner, id);
+        String prevHash = database.getAvatarHash(owner, id).left();
         if (firstRead && isFinal) {
             data = avatarData;
         }
@@ -129,7 +129,7 @@ public abstract class FSBServer {
             return;
         }
         String hash = avatarManager.addAvatar(data);
-        database.uploadAvatar(hash, Utils.uuidToHex(owner), id, data);
+        database.uploadAvatar(hash, ehash, Utils.uuidToHex(owner), id, data);
         if (prevHash != null) {
             avatarManager.release(prevHash);
         }

@@ -1,7 +1,8 @@
 package org.lexize.fsb;
 
 public interface FSBConfig {
-    int getAvatarsPriority();
-    int getPingsPriority();
+    FSBClient.FSBPriority getAvatarsPriority();
+    FSBClient.FSBPriority getPingsPriority();
     String getEPassword();
+    int maxAvatarPartSize();
 }

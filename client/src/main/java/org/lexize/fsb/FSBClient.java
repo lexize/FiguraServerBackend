@@ -12,6 +12,7 @@ import org.figuramc.figura.gui.FiguraToast;
 import org.lexize.fsb.packets.*;
 import org.lexize.fsb.packets.client.*;
 import org.lexize.fsb.packets.client.FSBUserDataS2C;
+import org.lexize.fsb.packets.server.FSBAvatarPartC2S;
 import org.lexize.fsb.utils.Identifier;
 import org.lexize.fsb.utils.Pair;
 import org.lexize.fsb.utils.Utils;
@@ -32,7 +33,9 @@ public abstract class FSBClient {
     private boolean connected = false;
     private boolean allowAvatars = false;
     private boolean allowPings = false;
-    private final HashMap<UUID, Pair<ByteArrayOutputStream, String>> avatarDataBuffers = new HashMap<>();
+    private int maxAvatarPartSize = 0;
+    private final HashMap<UUID, Pair<ByteArrayOutputStream, String>> incomingAvatarData = new HashMap<>();
+    private final HashMap<UUID, ByteArrayInputStream> outcomingAvatarData = new HashMap<>();
     private final HashMap<String, ArrayList<UUID>> avatarFetchTargets = new HashMap<>();
     private final ArrayList<String> expectedHashes = new ArrayList<>();
     private FSBConfig configInstance;
@@ -73,17 +76,18 @@ public abstract class FSBClient {
     public void onConnectServer(SocketAddress remoteAddress) {
 
     }
-    public void onConnectFSB(boolean allowAvatars, boolean allowPings) {
+    public void onConnectFSB(boolean allowAvatars, boolean allowPings, int maxAvatarPartSize) {
         connected = true;
         this.allowAvatars = allowAvatars;
         this.allowPings = allowPings;
+        this.maxAvatarPartSize = maxAvatarPartSize;
     }
 
     public void onDisconnect() {
         connected = false;
         this.allowPings = false;
         this.allowAvatars = false;
-        avatarDataBuffers.clear();
+        incomingAvatarData.clear();
     }
 
     public void initConfig(FSBConfig configInstance) {
@@ -92,10 +96,10 @@ public abstract class FSBClient {
 
     public void acceptAvatarPart(UUID streamId, byte[] avatarData, boolean isFinal) throws IOException {
         if (expectedHashes.isEmpty()) return;
-        ByteArrayOutputStream baos = avatarDataBuffers.get(streamId).left();
+        ByteArrayOutputStream baos = incomingAvatarData.get(streamId).left();
         baos.write(avatarData);
         if (isFinal) {
-            Pair<ByteArrayOutputStream, String> baosAndHash = avatarDataBuffers.remove(streamId);
+            Pair<ByteArrayOutputStream, String> baosAndHash = incomingAvatarData.remove(streamId);
             byte[] finalAvatarData = baos.toByteArray();
             String resultHash = Utils.hexFromBytes(Utils.getHash(finalAvatarData));
             if (!resultHash.equals(baosAndHash.right())) {
@@ -117,8 +121,41 @@ public abstract class FSBClient {
         }
     }
 
+    public void startStreaming(UUID streamId, ByteArrayInputStream dataStream) {
+        outcomingAvatarData.put(streamId, dataStream);
+    }
+
+    public void tick() {
+        tickStreams();
+    }
+
+    private void tickStreams() {
+        int avatarPartSize = getMaxAvatarPartSize();
+        ArrayList<UUID> toRemove = new ArrayList<>();
+        for (var entry: outcomingAvatarData.entrySet()) {
+            try {
+                byte[] data = entry.getValue().readNBytes(avatarPartSize);
+                sendC2SPacket(new FSBAvatarPartC2S(data, entry.getKey(), entry.getValue().available() == 0));
+                if (entry.getValue().available() == 0) toRemove.add(entry.getKey());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        for (UUID key: toRemove) {
+            outcomingAvatarData.remove(key);
+        }
+    }
+
+    private int getMaxAvatarPartSize() {
+        int configSize = configInstance != null ? configInstance.maxAvatarPartSize() : 0;
+        if (configSize == 0 && maxAvatarPartSize == 0) return 0;
+        else if (configSize == 0) return maxAvatarPartSize;
+        else if (maxAvatarPartSize == 0) return configSize;
+        else return Math.min(configSize, maxAvatarPartSize);
+    }
+
     public void prepareStream(UUID streamID, String expectedHash) {
-            avatarDataBuffers.put(streamID, new Pair<>(new ByteArrayOutputStream(), expectedHash));
+            incomingAvatarData.put(streamID, new Pair<>(new ByteArrayOutputStream(), expectedHash));
     }
 
     public boolean checkEHash(String avatarHash, String eHash) {
@@ -145,17 +182,17 @@ public abstract class FSBClient {
     }
 
     public void cancelAvatarLoad(UUID avatarOwner) {
-        avatarDataBuffers.remove(avatarOwner);
+        incomingAvatarData.remove(avatarOwner);
     }
 
     public static FSBClient instance() {
         return INSTANCE;
     }
     public static FSBPriority getPingsPriority() {
-        return FSBPriority.fromId(INSTANCE.configInstance != null ? INSTANCE.configInstance.getPingsPriority() : 0);
+        return INSTANCE.configInstance != null ? INSTANCE.configInstance.getPingsPriority() : null;
     }
     public static FSBPriority getAvatarsPriority() {
-        return FSBPriority.fromId(INSTANCE.configInstance != null ? INSTANCE.configInstance.getAvatarsPriority() : 0);
+        return INSTANCE.configInstance != null ? INSTANCE.configInstance.getAvatarsPriority() : null;
     }
 
     private static String getEPass() {

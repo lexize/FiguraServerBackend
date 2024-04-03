@@ -28,7 +28,7 @@ public class FSBServerAvatarPartHandler extends FSBServerPacketHandler<FSBAvatar
                 );
                 return;
             }
-            parent.acceptAvatarPart(player, packet.getId(), packet.getData(), packet.isFinal());
+            parent.acceptAvatarPart(player, packet.getId(), packet.getData(), packet.isFinal(), packet.getEHash());
         } catch (IOException | SQLException e) {
             throw new RuntimeException(e);
         }

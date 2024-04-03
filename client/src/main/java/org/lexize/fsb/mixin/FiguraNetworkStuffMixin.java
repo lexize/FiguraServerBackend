@@ -7,10 +7,7 @@ import org.figuramc.figura.avatar.UserData;
 import org.figuramc.figura.backend2.NetworkStuff;
 import org.figuramc.figura.backend2.websocket.C2SMessageHandler;
 import org.lexize.fsb.FSBClient;
-import org.lexize.fsb.packets.server.FSBAvatarPartC2S;
-import org.lexize.fsb.packets.server.FSBDeleteAvatarC2S;
-import org.lexize.fsb.packets.server.FSBFetchUserDataC2S;
-import org.lexize.fsb.packets.server.FSBPingC2S;
+import org.lexize.fsb.packets.server.*;
 import org.lexize.fsb.utils.Utils;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -18,9 +15,11 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.UUID;
 
 import static org.lexize.fsb.FSBClient.FSBPriority;
 
@@ -74,13 +73,15 @@ public class FiguraNetworkStuffMixin {
         if (send) {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             NbtIo.writeCompressed(avatar.nbt, baos);
+            UUID streamId = UUID.randomUUID();
             byte[] data = baos.toByteArray();
+            byte[] hash = Utils.getHash(data);
+            String hashString = Utils.hexFromBytes(hash);
             String ehash = FSBClient.instance().getEHash(Utils.getHash(data));
-            FSBAvatarPartC2S packet = new FSBAvatarPartC2S(
-                    data,
-                    avatar.id == null ? "avatar" : avatar.id,
-                    ehash);
-            FSBClient.instance().sendC2SPacket(packet);
+            FSBClient.instance().sendC2SPacket(
+                    new FSBStartAvatarStreamC2S(streamId, hashString, ehash, avatar.id == null ? "avatar" : avatar.id)
+            );
+            FSBClient.instance().startStreaming(streamId, new ByteArrayInputStream(data));
             baos.close();
             ci.cancel();
         }
