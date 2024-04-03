@@ -10,18 +10,20 @@ import java.util.UUID;
 
 public class FSBAvatarPartC2S implements IFSBPacket {
     public static Identifier ID = new Identifier(FSB.MOD_ID, "avatar_part");
-    private boolean isFinal;
     private byte[] data;
     private String id;
+    private String ehash;
 
-    public FSBAvatarPartC2S(boolean isFinal, byte[] data, String id) {
-        this.isFinal = isFinal;
+    public FSBAvatarPartC2S(byte[] data, String id, String ehash) {
+        this.ehash = ehash;
         this.id = id;
         this.data = data;
     }
 
     public FSBAvatarPartC2S(IFriendlyByteBuf buf) {
-        this.isFinal = buf.readByte() == 1;
+        if (buf.readByte() == 1) {
+            this.ehash = new String(buf.readByteArray(), StandardCharsets.UTF_8);
+        }
         this.id = new String(buf.readByteArray(), StandardCharsets.UTF_8);
         this.data = buf.readByteArray();
     }
@@ -33,13 +35,16 @@ public class FSBAvatarPartC2S implements IFSBPacket {
 
     @Override
     public void write(IFriendlyByteBuf buf) {
-        buf.writeByte(isFinal ? 1 : 0);
+        buf.writeByte(ehash != null ? 1 : 0);
+        if (ehash != null) {
+            buf.writeByteArray(ehash.getBytes(StandardCharsets.UTF_8));
+        }
         buf.writeByteArray(id.getBytes(StandardCharsets.UTF_8));
         buf.writeByteArray(data);
     }
 
     public boolean isFinal() {
-        return isFinal;
+        return ehash != null;
     }
 
     public byte[] getData() {

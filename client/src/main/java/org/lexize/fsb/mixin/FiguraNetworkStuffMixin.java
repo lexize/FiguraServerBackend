@@ -11,6 +11,7 @@ import org.lexize.fsb.packets.server.FSBAvatarPartC2S;
 import org.lexize.fsb.packets.server.FSBDeleteAvatarC2S;
 import org.lexize.fsb.packets.server.FSBFetchUserDataC2S;
 import org.lexize.fsb.packets.server.FSBPingC2S;
+import org.lexize.fsb.utils.Utils;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -73,10 +74,12 @@ public class FiguraNetworkStuffMixin {
         if (send) {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             NbtIo.writeCompressed(avatar.nbt, baos);
+            byte[] data = baos.toByteArray();
+            String ehash = FSBClient.instance().getEHash(Utils.getHash(data));
             FSBAvatarPartC2S packet = new FSBAvatarPartC2S(
-                    true,
-                    baos.toByteArray(),
-                    avatar.id == null ? "avatar" : avatar.id);
+                    data,
+                    avatar.id == null ? "avatar" : avatar.id,
+                    ehash);
             FSBClient.instance().sendC2SPacket(packet);
             baos.close();
             ci.cancel();
